@@ -3,6 +3,7 @@ import pandas as pd
 import requests
 import re
 import pdb
+import urllib3
 
 from bs4 import BeautifulSoup as soup
 from helper import Helper
@@ -12,16 +13,20 @@ from parser import Parser
 
 class LogoFinder:
 
+  # Utilities
   helper = Helper()
+  # Parsing Heuristics. Just one naive heuristic implemented
   parser = Parser()
 
   def __init__(self):
-    self.top1k_df = self.helper.load_data().tail(500)
+    self.top1k_df = self.helper.load_data().head(20)
     self.__errors = []
     self.__success = []
     self.__results = []
 
   def run(self):
+
+    # It iterates over the domains column
     for site in self.top1k_df['Domain']:
 
       _result = {'site': site, 'logo_url': None, 'error': None}
@@ -46,8 +51,10 @@ class LogoFinder:
       except requests.exceptions.ReadTimeout:
         _result['error'] = "Read time out with: " + site
         self.__errors.append([_result['site'], _result['error']])
+      except urllib3.exceptions.LocationValueError:
+        _result['error'] = "Location error with: " + site
+        self.__errors.append([_result['site'], _result['error']])
 
-      print('.', end='')
 
     return None
 
@@ -60,15 +67,21 @@ class LogoFinder:
   def results(self):
     return self.__results
 
+  def results_to_csv(self):
+    self.helper.results_as_csv_file(self.results())
+
+  def errors_to_csv(self):
+    self.helper.errors_as_csv_file(self.errors())
 
 
 
 
-
-
-
-logo = LogoFinder()
-
+# Execution
 if __name__ == "__main__":
+
+  logo = LogoFinder()
+  # loads the data and start the 'scraping'
   logo.run()
-  logo.helper.results_as_csv_file(logo.results())
+  # return results in csv file
+  logo.results_to_csv()
+  logo.errors_to_csv()

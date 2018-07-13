@@ -11,13 +11,15 @@ class Parser:
   def __bs_scope(self, bs_obj):
     _scope = bs_obj
 
+    # first, check header tag
     if hasattr(bs_obj, 'header') and bs_obj.header is not None:
       _scope = bs_obj.header
+    # then body
     elif hasattr(bs_obj, 'body') and bs_obj.body is not None:
       _scope = bs_obj.body
+    # else the whole document
     else:
       _scope = bs_obj
-
 
     return _scope
 
